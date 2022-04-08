@@ -25,6 +25,10 @@
 #include "filehdr.h"
 #include "directory.h"
 
+#define NumDirEntries 		10
+#define MaxDirLength        10
+#define PathMaxLen          19
+
 //----------------------------------------------------------------------
 // Directory::Directory
 // 	Initialize a directory; initially, the directory is completely
@@ -116,6 +120,61 @@ Directory::Find(char *name)
 }
 
 //----------------------------------------------------------------------
+// Directory::FindDir
+// 	Look up file name in directory, and return the disk sector number
+//	where the file's header is stored. Return -1 if the name isn't 
+//	in the directory.
+//
+//	"name" -- the file name to look up(including file path)
+//----------------------------------------------------------------------
+
+int
+Directory::FindDir(char *name)
+{
+    DEBUG('-f',"In Directory::FindDir(), name = %s\n", name);
+    int sector = 1;
+    OpenFile *dir_file = new OpenFile(sector);
+    Directory *dir = new Directory(NumDirEntries);
+    dir->FetchFrom(dir_file);
+
+    // printf("*******************************before while\n");
+    // dir->Print();
+    // printf("*******************************\n");
+    
+    int str_pos = 0;
+    int sub_str_pos = 0;
+    char sub_str[MaxDirLength];
+
+    while(str_pos < strlen(name)) {     //根据字符'/'分割文件/文件夹路径
+        sub_str[sub_str_pos++] = name[str_pos++];
+        if(name[str_pos] == '/') {
+            sub_str[sub_str_pos] = '\0';
+
+            // printf("-------------------------------\n");
+            // dir->Print();
+            // printf("-------------------------------\n");
+
+            sector = dir->Find(sub_str);
+
+            if(sector == -1) {
+                break;
+            }
+
+            DEBUG('-f',"In while loop, sub_str = %s\n", sub_str);
+            DEBUG('-f',"In while loop, sector = %d\n", sector);
+
+            dir_file = new OpenFile(sector);
+            dir = new Directory(NumDirEntries);
+            dir->FetchFrom(dir_file);
+            str_pos++;
+            sub_str_pos = 0;
+        }
+    }
+    return sector;
+}
+
+
+//----------------------------------------------------------------------
 // Directory::Add
 // 	Add a file into the directory.  Return TRUE if successful;
 //	return FALSE if the file name is already in the directory, or if
@@ -137,6 +196,40 @@ Directory::Add(char *name, int newSector)
             table[i].inUse = TRUE;
             strncpy(table[i].name, name, FileNameMaxLen); 
             table[i].sector = newSector;
+        return TRUE;
+	}
+    return FALSE;	// no space.  Fix when we have extensible files.
+}
+
+
+
+bool
+Directory::Add(char *name, int newSector, int type)
+{ 
+    char fileName[FileNameMaxLen + 1];
+    int pos = -1;
+    for(int i = strlen(name) - 1; i >= 0; i--) {
+        if(name[i] == '/') {
+            pos = i + 1;
+            break;
+        }
+    }
+    if(pos == -1) pos = 0;
+    int j = 0;
+    for(int i = pos; i < strlen(name); i++)
+        fileName[j++] = name[i];
+    fileName[j] = '\0';
+
+    if (FindIndex(fileName) != -1)
+	    return FALSE;
+
+    for (int i = 0; i < tableSize; i++)
+        if (!table[i].inUse) {
+            table[i].inUse = TRUE;
+            strncpy(table[i].path, name, PathMaxLen);
+            strncpy(table[i].name, fileName, FileNameMaxLen); 
+            table[i].sector = newSector;
+            table[i].type = type;
         return TRUE;
 	}
     return FALSE;	// no space.  Fix when we have extensible files.
@@ -188,10 +281,45 @@ Directory::Print()
     printf("Directory contents:\n");
     for (int i = 0; i < tableSize; i++)
 	if (table[i].inUse) {
-	    printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
+	    printf("Name: %s, Sector: %d, Path: %s, Type: %d\n", table[i].name, table[i].sector, table[i].path, table[i].type);
 	    hdr->FetchFrom(table[i].sector);
 	    hdr->Print();
 	}
     printf("\n");
     delete hdr;
+}
+
+//----------------------------------------------------------------------
+// Directory::GetType
+// 	Look up file name in directory, and return the file type. 
+//  Return -1 if the name isn't in the directory.
+//
+//	"name" -- the file name to look up
+//----------------------------------------------------------------------
+
+int
+Directory::GetType(char *name)
+{
+    int i = FindIndex(name);
+
+    if (i != -1)
+	return table[i].type;
+    return -1;
+}
+
+//----------------------------------------------------------------------
+// Directory::IsEmpty
+// 	Look up file name in directory, and return the file type. 
+//  Return -1 if the name isn't in the directory.
+//
+//	"name" -- the file name to look up
+//----------------------------------------------------------------------
+
+bool
+Directory::IsEmpty()
+{
+    for (int i = 0; i < tableSize; i++)
+        if (table[i].inUse)
+	    return false;
+    return true;
 }

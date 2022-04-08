@@ -72,6 +72,9 @@ Copy(char *from, char *to)
     fclose(fp);
 }
 
+void CreateDir(char *name) {
+    fileSystem->Create(name, -1);
+}
 
 //----------------------------------------------------------------------
 // Append

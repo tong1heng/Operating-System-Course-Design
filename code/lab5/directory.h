@@ -22,6 +22,9 @@
 #define FileNameMaxLen 		9	// for simplicity, we assume 
 					// file names are <= 9 characters long
 
+#define PathMaxLen        19 // for simplicity, we assume
+          // file paths are <= 19 characters long
+
 // The following class defines a "directory entry", representing a file
 // in the directory.  Each entry gives the name of the file, and where
 // the file's header is to be found on disk.
@@ -36,6 +39,10 @@ class DirectoryEntry {
 					//   FileHeader for this file 
     char name[FileNameMaxLen + 1];	// Text name for file, with +1 for 
 					// the trailing '\0'
+
+    // Extension for multi-level directory
+    int type;         // 0--folder  1--file
+    char path[PathMaxLen + 1];      // Path for file, with +1 for '\0'
 };
 
 // The following class defines a UNIX-like "directory".  Each entry in
@@ -70,6 +77,15 @@ class Directory {
     void Print();			// Verbose print of the contents
 					//  of the directory -- all the file
 					//  names and their contents.
+
+    // Extension for multi-level directory
+    int FindDir(char *name);    // 根据完整的路径获得要访问的文件/文件夹所在的目录文件的扇区号（即通过该目录中包含索引项）
+
+    bool Add(char *name, int newSector, int type);  // Add a file(type=1) or folder(type=0) name into the directory
+
+    int GetType(char *name);
+
+    bool IsEmpty();
 
   private:
     int tableSize;			// Number of directory entries

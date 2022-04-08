@@ -171,7 +171,7 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     lastSector = divRoundDown(position + numBytes - 1, SectorSize);
     numSectors = 1 + lastSector - firstSector;
 
-    buf = new char[numSectors * SectorSize];
+    buf = new char[numSectors * SectorSize];        // buffer contains the sector data
 
     firstAligned = (bool)(position == (firstSector * SectorSize));
     lastAligned = (bool)((position + numBytes) == ((lastSector + 1) * SectorSize));

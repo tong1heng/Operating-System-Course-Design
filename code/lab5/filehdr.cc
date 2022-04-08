@@ -28,10 +28,10 @@
 #include "filehdr.h"
 
 FileHeader::FileHeader() {
-    numBytes=0;
-    numSectors=0;
-    for(int i=0;i<NumDirect;i++)
-        dataSectors[i]=0;
+    numBytes = 0;
+    numSectors = 0;
+    for(int i = 0; i < NumDirect; i++)
+        dataSectors[i] = 0;
 }
 
 //----------------------------------------------------------------------

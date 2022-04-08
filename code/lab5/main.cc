@@ -56,6 +56,7 @@
 // External functions used by this file
 
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
+extern void CreateDir(char *unixDir);
 extern void Append(char *unixFile, char *nachosFile, int half);
 extern void NAppend(char *nachosFileFrom, char *nachosFileTo);
 extern void Print(char *file), PerformanceTest(void);
@@ -117,7 +118,13 @@ main(int argc, char **argv)
 	    ASSERT(argc > 2);
 	    Copy(*(argv + 1), *(argv + 2));
 	    argCount = 3;
-	} 
+	}
+	else if (!strcmp(*argv, "-mkdir")) {	// create a folder in Nachos
+	    ASSERT(argc > 1);
+		// DEBUG('t', "Entering mkdir");
+		CreateDir(*(argv + 1));
+	    argCount = 2;
+	}  
 	else if (!strcmp(*argv, "-ap")) {  // append from UNIX to Nachos
 	    ASSERT(argc > 2);
 	    Append(*(argv + 1), *(argv + 2), 0);
