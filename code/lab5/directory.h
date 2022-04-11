@@ -79,13 +79,19 @@ class Directory {
 					//  names and their contents.
 
     // Extension for multi-level directory
-    int FindDir(char *name);    // 根据完整的路径获得要访问的文件/文件夹所在的目录文件的扇区号（即通过该目录中包含索引项）
+    int FindDir(char *name);    // Get the sector number of the directory that 
+                                // includes the file to be accessed 
+                                // according to complete path
 
     bool Add(char *name, int newSector, int type);  // Add a file(type=1) or folder(type=0) name into the directory
 
-    int GetType(char *name);
+    int GetType(char *name);    // Get file type for the given file name
 
-    bool IsEmpty();
+    bool IsEmpty();             // Judge if current directory is empty
+
+    void List(int depth);
+
+    void Print(int depth);
 
   private:
     int tableSize;			// Number of directory entries

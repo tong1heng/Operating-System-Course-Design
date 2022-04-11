@@ -150,18 +150,16 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     char *buf;
 
     if ((numBytes <= 0) || (position > fileLength))    // parameter fault
-	return -1;				// check request
+	    return -1;				// check request
 
     if ((position + numBytes) > fileLength)             // total bytes bigger than filelength
     {
-        int incrementBytes=(position+numBytes)-fileLength;
-        BitMap* freeBitMap=fileSystem->getBitMap();
-        bool hdrRet=hdr->Allocate(freeBitMap,fileLength,incrementBytes);
-        if(!hdrRet)     // insufficient disk space, or the file is too big
+        int incrementBytes = (position + numBytes) - fileLength;
+        BitMap* freeBitMap = fileSystem->getBitMap();
+        bool hdrRet = hdr->Allocate(freeBitMap, fileLength, incrementBytes);
+        if(!hdrRet)             // insufficient disk space, or the file is too big
             return -1;
         fileSystem->setBitMap(freeBitMap);
-
-        //numBytes = fileLength - position;                   // lose the extra bytes directly
     }
 
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	

@@ -72,6 +72,11 @@ Copy(char *from, char *to)
     fclose(fp);
 }
 
+//----------------------------------------------------------------------
+// CreateDir
+// 	Create a new folder in Nachos file system.
+//----------------------------------------------------------------------
+
 void CreateDir(char *name) {
     fileSystem->Create(name, -1);
 }

@@ -121,9 +121,10 @@ Directory::Find(char *name)
 
 //----------------------------------------------------------------------
 // Directory::FindDir
-// 	Look up file name in directory, and return the disk sector number
-//	where the file's header is stored. Return -1 if the name isn't 
-//	in the directory.
+// 	Look up the directory according to the file path, and return 
+//  the disk sector number where the parent directory file header 
+//  is stored. Return -1 if certain directory on the path is 
+//  invalid.
 //
 //	"name" -- the file name to look up(including file path)
 //----------------------------------------------------------------------
@@ -145,7 +146,7 @@ Directory::FindDir(char *name)
     int sub_str_pos = 0;
     char sub_str[MaxDirLength];
 
-    while(str_pos < strlen(name)) {     //根据字符'/'分割文件/文件夹路径
+    while(str_pos < strlen(name)) {     // split path by '/'
         sub_str[sub_str_pos++] = name[str_pos++];
         if(name[str_pos] == '/') {
             sub_str[sub_str_pos] = '\0';
@@ -259,12 +260,41 @@ Directory::Remove(char *name)
 // 	List all the file names in the directory. 
 //----------------------------------------------------------------------
 
+// void
+// Directory::List()
+// {
+//    for (int i = 0; i < tableSize; i++)
+// 	if (table[i].inUse)
+// 	    printf("%s\n", table[i].name);
+// }
+
 void
 Directory::List()
 {
-   for (int i = 0; i < tableSize; i++)
-	if (table[i].inUse)
-	    printf("%s\n", table[i].name);
+    printf("@root\n");
+    List(1);
+}
+
+void
+Directory::List(int depth)
+{
+    for (int i = 0; i < tableSize; i++) {
+        if (table[i].inUse) {
+            for(int j = 0; j < depth; j++) {
+                printf("|    ");
+            }
+            if (table[i].type == 1) {
+                printf("|%s\n", table[i].name);
+            }
+            else {
+                printf("|@%s\n", table[i].name);
+                Directory *dir = new Directory(NumDirEntries);
+                OpenFile *openFile = new OpenFile(table[i].sector);
+                dir->FetchFrom(openFile);
+                dir->List(depth + 1);
+            }
+        }
+    }
 }
 
 //----------------------------------------------------------------------
@@ -276,16 +306,29 @@ Directory::List()
 void
 Directory::Print()
 { 
+    printf("Directory contents:\n");
+    Print(0);
+    printf("\n");
+}
+
+void
+Directory::Print(int depth)
+{ 
     FileHeader *hdr = new FileHeader;
 
-    printf("Directory contents:\n");
     for (int i = 0; i < tableSize; i++)
 	if (table[i].inUse) {
 	    printf("Name: %s, Sector: %d, Path: %s, Type: %d\n", table[i].name, table[i].sector, table[i].path, table[i].type);
 	    hdr->FetchFrom(table[i].sector);
 	    hdr->Print();
+        
+        if (table[i].type == 0) {
+            Directory *dir = new Directory(NumDirEntries);
+            OpenFile *openFile = new OpenFile(table[i].sector);
+            dir->FetchFrom(openFile);
+            dir->Print(depth + 1);
+        }
 	}
-    printf("\n");
     delete hdr;
 }
 
@@ -309,10 +352,7 @@ Directory::GetType(char *name)
 
 //----------------------------------------------------------------------
 // Directory::IsEmpty
-// 	Look up file name in directory, and return the file type. 
-//  Return -1 if the name isn't in the directory.
-//
-//	"name" -- the file name to look up
+//  Return true if the directory is empty.
 //----------------------------------------------------------------------
 
 bool

@@ -308,6 +308,7 @@ FileSystem::Open(char *name)
     fileName[j] = '\0';
 
     sector = directory->Find(fileName);
+    openFile = NULL;
     if (sector >= 0) 		
 	    openFile = new OpenFile(sector);	// name was found in directory 
 
@@ -375,7 +376,7 @@ FileSystem::Remove(char *name)
         OpenFile *currentOpenFile = new OpenFile(sector);
         currentDirectory->FetchFrom(currentOpenFile);
         if(!currentDirectory->IsEmpty()) {  // folder not empty, cannot delete
-            printf("Unable to delete the folder, there are still files.\n");
+            printf("Unable to delete the folder, there are still files in current directory.\n");
             delete currentDirectory;
             delete currentOpenFile;
             return FALSE;
