@@ -33,13 +33,16 @@ class AddrSpace {
     void RestoreState();		// info on a context switch 
 
     void Print();
+    unsigned int GetSpaceId() { return spaceId;}
 
   private:
     TranslationEntry *pageTable;	// Assume linear page table translation
 					// for now!
     unsigned int numPages;		// Number of pages in the virtual 
 					// address space
+    unsigned int spaceId;
     static BitMap *pageMap;   // Bitmap of physical page, static for global view for all objects
+    static BitMap *pidMap;
 };
 
 #endif // ADDRSPACE_H

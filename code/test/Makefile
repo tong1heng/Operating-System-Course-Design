@@ -50,7 +50,7 @@ LD = $(GCCDIR)ld
 #        corresponding .o with start.o.  If you want to have more than
 #        one .c file per target, you will have to change stuff below.
 
-targets = halt shell matmult sort
+targets = join exit exec bar halt shell matmult sort
 
 # Targest are put in the architecture specific 'bin' dir.
 
@@ -72,7 +72,7 @@ SFILES = start.s
 
 include ../Makefile.common
 
-INCDIR =-I../userprog -I../threads
+INCDIR = -I../lab7-8 -I../userprog -I../threads
 CFLAGS = -G 0 -c $(INCDIR)
 
 coff2noff = ../bin/$(real_bin_dir)/coff2noff

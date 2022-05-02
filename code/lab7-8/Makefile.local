@@ -15,7 +15,18 @@ CCFILES += addrspace.cc\
 	console.cc\
 	machine.cc\
 	mipssim.cc\
-	translate.cc
+	translate.cc\
+	list.cc\
+	scheduler.cc\
+	main.cc\
+	synch.cc\
+	synchtest.cc\
+	system.cc\
+	thread.cc\
+	threadtest.cc\
+	synchlist.cc
+
+
 
 INCPATH += -I../bin -I../lab7-8 -I../filesys
 

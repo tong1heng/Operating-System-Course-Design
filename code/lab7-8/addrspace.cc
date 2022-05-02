@@ -20,6 +20,7 @@
 #include "addrspace.h"
 #include "noff.h"
 
+#define MAX_USERPROCESSES 256
 
 //----------------------------------------------------------------------
 // SwapHeader
@@ -44,6 +45,7 @@ SwapHeader (NoffHeader *noffH)
 }
 
 BitMap* AddrSpace::pageMap = new BitMap(NumPhysPages);
+BitMap* AddrSpace::pidMap = new BitMap(MAX_USERPROCESSES);
 
 //----------------------------------------------------------------------
 // AddrSpace::AddrSpace
@@ -62,6 +64,10 @@ BitMap* AddrSpace::pageMap = new BitMap(NumPhysPages);
 
 AddrSpace::AddrSpace(OpenFile *executable)
 {
+    ASSERT(pidMap->NumClear() >= 1);    // remain empty pid for use
+    spaceId = pidMap->Find() + 100;     // 0-99 for kernel thread
+    printf("spaceId = %d\n", spaceId);
+
     NoffHeader noffH;
     unsigned int i, size;
 
@@ -103,7 +109,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
     
 // zero out the entire address space, to zero the unitialized data segment 
 // and the stack segment
-    bzero(machine->mainMemory, size);
+    //bzero(machine->mainMemory, size);
 
 // then, copy in the code and data segments into memory
     if (noffH.code.size > 0) {
@@ -117,8 +123,8 @@ AddrSpace::AddrSpace(OpenFile *executable)
     if (noffH.initData.size > 0) {
         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
 			noffH.initData.virtualAddr, noffH.initData.size);
-        int position = pageTable[noffH.code.virtualAddr / PageSize].physicalPage * PageSize;
-        int offset = noffH.code.virtualAddr % PageSize;
+        int position = pageTable[noffH.initData.virtualAddr / PageSize].physicalPage * PageSize;
+        int offset = noffH.initData.virtualAddr % PageSize;
         executable->ReadAt(&(machine->mainMemory[position + offset]),
 			noffH.initData.size, noffH.initData.inFileAddr);
     }
@@ -132,10 +138,11 @@ AddrSpace::AddrSpace(OpenFile *executable)
 
 AddrSpace::~AddrSpace()
 {
-   for(int i = 0; i < numPages; i++) {
-       pageMap->Clear(pageTable[i].physicalPage);
-   }
-   delete [] pageTable;
+    pidMap->Clear(spaceId - 100);
+    for(int i = 0; i < numPages; i++) {
+        pageMap->Clear(pageTable[i].physicalPage);
+    }
+    delete [] pageTable;
 }
 
 //----------------------------------------------------------------------
