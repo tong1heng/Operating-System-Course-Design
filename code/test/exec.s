@@ -10,21 +10,24 @@ $LC0:
 	.globl	main
 	.ent	main
 main:
-	.frame	$fp,24,$31		# vars= 0, regs= 2/0, args= 16, extra= 0
+	.frame	$fp,32,$31		# vars= 8, regs= 2/0, args= 16, extra= 0
 	.mask	0xc0000000,-4
 	.fmask	0x00000000,0
-	subu	$sp,$sp,24
-	sw	$31,20($sp)
-	sw	$fp,16($sp)
+	subu	$sp,$sp,32
+	sw	$31,28($sp)
+	sw	$fp,24($sp)
 	move	$fp,$sp
 	jal	__main
+	li	$2,100			# 0x00000064
+	sw	$2,16($fp)
+	sw	$0,20($fp)
 	la	$4,$LC0
 	jal	Exec
 	jal	Halt
 $L1:
 	move	$sp,$fp
-	lw	$31,20($sp)
-	lw	$fp,16($sp)
-	addu	$sp,$sp,24
+	lw	$31,28($sp)
+	lw	$fp,24($sp)
+	addu	$sp,$sp,32
 	j	$31
 	.end	main
