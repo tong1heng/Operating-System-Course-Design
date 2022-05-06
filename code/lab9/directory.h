@@ -89,9 +89,13 @@ class Directory {
 
     bool IsEmpty();             // Judge if current directory is empty
 
+    void List(char c);
+
     void List(int depth);
 
     void Print(int depth);
+
+    bool Rename(char *source, char *dest);
 
   private:
     int tableSize;			// Number of directory entries

@@ -24,6 +24,9 @@
 #include "utility.h"
 #include "filehdr.h"
 #include "directory.h"
+#include "filesys.h"
+
+extern FileSystem  *fileSystem;
 
 #define NumDirEntries 		10
 #define MaxDirLength        10
@@ -268,8 +271,45 @@ Directory::Remove(char *name)
 // 	    printf("%s\n", table[i].name);
 // }
 
+extern char *setStrLength(char *str, int len);
+extern char *numFormat(int num);
+void Directory::List()
+{
+    FileHeader *hdr = new FileHeader;
+
+    int size = 0;
+    printf("=============================================================\n");
+    printf("Name Size Sectors SectorList\n");
+    printf("-------------------------------------------------------------\n");
+    for (int i = 0; i < tableSize; i++)
+        if (table[i].inUse)
+        {
+            hdr->FetchFrom(table[i].sector);
+            size += hdr->FileLength();
+            char *fileName = table[i].name;
+            int fileSize = hdr->FileLength();
+            int fileSectors = hdr->getNumSectors();
+            printf("%s ", setStrLength(fileName, 9));
+            printf("%s ", setStrLength(numFormat(fileSize), 7));
+            printf("%s", setStrLength(numFormat(fileSectors), 6));
+            printf("%s\n", hdr->getDataSectors());
+        }
+    printf("-------------------------------------------------------------\n");
+
+    // size:not include the file header
+    //printf("Available Disk Space: %s bytes",numFormat(32*32*128 - size));
+    //printf(" (%s KB)\n\n",numFormat((32*32*128 - size)/1024));
+
+    BitMap *freeMap = fileSystem->getBitMap();
+    int freeSize = freeMap->NumClear() * 128;
+    printf("Available Disk Space: %s bytes", numFormat(freeSize));
+    printf(" (%s KB)\n\n", numFormat(freeSize / 1024));
+
+    delete hdr;
+}
+
 void
-Directory::List()
+Directory::List(char c)
 {
     printf("@root\n");
     List(1);
@@ -362,4 +402,18 @@ Directory::IsEmpty()
         if (table[i].inUse)
 	    return false;
     return true;
+}
+
+bool
+Directory::Rename(char *source, char *dest)
+{
+    int i = FindIndex(source);
+
+    if (i != -1) {
+        strcpy(table[i].name, dest);
+        return true;
+    }
+	else {
+        return false;
+    }
 }

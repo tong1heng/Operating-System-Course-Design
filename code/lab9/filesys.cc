@@ -468,3 +468,72 @@ BitMap* FileSystem::getBitMap() {
 void FileSystem::setBitMap(BitMap* freeMap) {
     freeMap->WriteBack(freeMapFile);
 }
+
+bool FileSystem::Rename(char *source, char *dest)
+{
+    bool success;
+    Directory *directory = new Directory(NumDirEntries);
+    directory->FetchFrom(directoryFile);
+    success = directory->Rename(source, dest);
+    if (success)
+    {
+        directory->WriteBack(directoryFile);
+        printf("Rename success.\n");
+    }
+    else
+        printf("Rename: file %s not exists.\n", source);
+
+    delete directory;
+    return success;
+}
+
+void FileSystem::FormatDisk(bool format)
+{
+    if (!format)
+        return;
+
+    BitMap *freeMap = new BitMap(NumSectors);
+    //NumSectors=32*32=1024 sectors for DISK
+    Directory *directory = new Directory(NumDirEntries); //NumDirEntries=10 entrys for (root) directory
+    FileHeader *mapHdr = new FileHeader;
+    FileHeader *dirHdr = new FileHeader;
+
+    DEBUG('f', "Formatting the file system.\n");
+    // First, allocate space for FileHeaders for the directory and bitmap
+    // (make sure no one else grabs these!)
+    freeMap->Mark(FreeMapSector);
+    freeMap->Mark(DirectorySector);
+    // Second, allocate space for the data blocks containing the contents
+    // of the directory and bitmap files. There better be enough space!
+    ASSERT(mapHdr->Allocate(freeMap, FreeMapFileSize));   //FreeMapFileSize=128,allocates 1 sector for free bitmap file
+    ASSERT(dirHdr->Allocate(freeMap, DirectoryFileSize)); //DirectoryFileSize=200,allocates 2 sectors for directory file
+    // Flush the bitmap and directory FileHeaders back to disk
+    // We need to do this before we can "Open" the file, since open
+    // reads the file header off of disk (and currently the disk has garbage
+    // on it!).
+    DEBUG('f', "Writing headers back to disk.\n");
+    mapHdr->WriteBack(FreeMapSector);   //FreeMapSector=0, write freemap header to sector 0
+    dirHdr->WriteBack(DirectorySector); //DirectorySector=1, write directory header tosector 1
+    // OK to open the bitmap and directory files now
+    // The file system operations assume these two files are left open
+    // while Nachos is running.
+    freeMapFile = new OpenFile(FreeMapSector);
+    directoryFile = new OpenFile(DirectorySector);
+
+    // Once we have the files "open", we can write the initial version
+    // of each file back to disk. The directory at this point is completely
+    // empty; but the bitmap has been changed to reflect the fact that
+    // sectors on the disk have been allocated for the file headers and
+    // to hold the file data for the directory and bitmap.
+    DEBUG('f', "Writing bitmap and directory back to disk.\n");
+    freeMap->WriteBack(freeMapFile); // flush changes to disk
+    directory->WriteBack(directoryFile);
+    //print each bit in freeMap
+    //freeMap->PrintinBit(); //added by han
+    freeMap->Print();
+    directory->Print();
+    delete freeMap;
+    delete directory;
+    delete mapHdr;
+    delete dirHdr;
+}

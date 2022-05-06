@@ -40,6 +40,7 @@ class Scheduler {
 
     void DeleteTerminatedThread(int deleteSpaceId);
     void EmptyList(List *list) { delete list; }
+    void PrintThreads();
 
   private:
     List *waitingList;    // queue of threads that are waiting

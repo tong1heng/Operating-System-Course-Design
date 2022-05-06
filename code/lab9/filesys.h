@@ -90,6 +90,10 @@ class FileSystem {
 
 	void setBitMap(BitMap* freeMap);
 
+	bool Rename(char *source, char *dest);
+
+	void FormatDisk(bool format);
+
   private:
    OpenFile* freeMapFile;		// Bit map of free disk blocks,
 					// represented as a file

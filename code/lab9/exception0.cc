@@ -97,7 +97,7 @@ ExceptionHandler(ExceptionType which)
 	            // if(exitCode == 99)
 		        //     scheduler->EmptyList(scheduler->GetTerminatedList());
 
-	            //delete currentThread->space;
+	            // delete currentThread->space;
 	            currentThread->Finish();
                 printf("**************************\n");
                 AdvancePC();
@@ -161,112 +161,134 @@ ExceptionHandler(ExceptionType which)
                 break;
             }
             case SC_Create:{
-                printf("Syscall exception type: SC_Create, CurrentThreadId: %d\n",currentThread->GetSpaceId());
-                // read argument
-                char filename[50];
                 int addr = machine->ReadRegister(4);
-                int i = 0;
-                do {    // read filename from main memory
-                    machine->ReadMem(addr+i, 1, (int *)&filename[i]);
-                } while(filename[i++] != '\0');
-
-                int fileDescriptor = OpenForWrite(filename);
-                if(fileDescriptor == -1) {
-                    printf("create file %s failed!\n", filename);
+                char filename[128];
+                for(int i = 0; i < 128; i++){
+                    machine->ReadMem(addr+i,1,(int *)&filename[i]);
+                    if(filename[i] == '\0') break;
                 }
-                else {
-                    printf("create file %s succeed, the file id is %d\n", filename, fileDescriptor);
-                }
-                Close(fileDescriptor);
-                // machine->WriteRegister(2,fileDescriptor);
+                if(!fileSystem->Create(filename,0)) printf("create file %s failed!\n",filename);
+                else printf("create file %s succeed!\n",filename);
                 AdvancePC();
                 break;
             }
+
             case SC_Open:{
-                printf("Syscall exception type: SC_Open, CurrentThreadId: %d\n",currentThread->GetSpaceId());
-                // read argument
-                char filename[50];
-                int addr = machine->ReadRegister(4);
-                int i = 0;
-                do {    // read filename from main memory
-                    machine->ReadMem(addr+i, 1, (int *)&filename[i]);
-                } while(filename[i++] != '\0');
-
-                int fileDescriptor = OpenForWrite(filename);
-                if(fileDescriptor == -1) {
-                    printf("Open file %s failed!\n",filename);
+                int addr = machine->ReadRegister(4), fileId;
+                char filename[128];
+                for(int i = 0; i < 128; i++){
+                    machine->ReadMem(addr+i,1,(int *)&filename[i]);
+                    if(filename[i] == '\0') break;
                 }
-                else {
-                    printf("Open file %s succeed, the file id is %d\n", filename, fileDescriptor);
-                }       
-                machine->WriteRegister(2,fileDescriptor);
+                OpenFile *openfile = fileSystem->Open(filename);
+                if(openfile == NULL) {
+                    printf("File \"%s\" not Exists, could not open it.\n",filename);
+                    fileId = -1;
+                }
+                else{
+                    fileId = currentThread->space->getFileDescriptor(openfile);
+                    if(fileId < 0) printf("Too many files opened!\n");
+                    else printf("file:\"%s\" open succeed, the file id is %d\n",filename,fileId);
+                }
+                machine->WriteRegister(2,fileId);
                 AdvancePC();
                 break;
             }
+
             case SC_Read:{
-                printf("Syscall exception type: SC_Read, CurrentThreadId: %d\n",currentThread->GetSpaceId());
                 // 读取寄存器信息
                 int addr = machine->ReadRegister(4);
-                int size = machine->ReadRegister(5);        // 字节数
+                int size = machine->ReadRegister(5);       // 字节数
                 int fileId = machine->ReadRegister(6);      // fd
+        
+                // 打开文件
+                OpenFile *openfile = currentThread->space->getFileId(fileId);
 
                 // 打开文件读取信息
                 char buffer[size+1];
-                OpenFile *openfile = new OpenFile(fileId);
-                int readnum = openfile->Read(buffer,size);
+                int readnum = 0;
+                if(fileId == 0) readnum = openfile->ReadStdin(buffer,size);
+                else readnum = openfile->Read(buffer,size);
 
-                for(int i = 0; i < size; i++) {
-                    if(!machine->WriteMem(addr, 1, buffer[i]))
-                        printf("This is something Wrong.\n");
+                // printf("readnum:%d,fileId:%d,size:%d\n",readnum,fileId,size);
+                // printf("buffer = %s\n", buffer);
+                for(int i = 0; i < readnum; i++)
+                    machine->WriteMem(addr,1,buffer[i]);
+                buffer[readnum] = '\0';
+
+                for(int i = 0; i < readnum; i++)
+                    if(buffer[i] >= 0 && buffer[i] <= 9) buffer[i] = buffer[i]+0x30;
+                char *buf = buffer;
+                if(readnum > 0){
+                    if(fileId != 0)
+                        printf("Read file (%d) succeed! the content is \"%s\", the length is %d\n",fileId,buf,readnum);
                 }
-                buffer[size] = '\0';
-                printf("read succeed, the content is \"%s\", the length is %d\n", buffer, size);
+                else printf("\nRead file failed!\n");
                 machine->WriteRegister(2,readnum);
                 AdvancePC();
                 break;
             }
+
             case SC_Write:{
-                printf("Syscall exception type: SC_Write, CurrentThreadId: %d\n",currentThread->GetSpaceId());
                 // 读取寄存器信息
-                int addr = machine->ReadRegister(4);
-                int size = machine->ReadRegister(5);        // 字节数
+                int addr = machine->ReadRegister(4);       // 写入数据
+                int size = machine->ReadRegister(5);       // 字节数
                 int fileId = machine->ReadRegister(6);      // fd
-    
-                // 打开文件
+                
+                // 创建文件
                 OpenFile *openfile = new OpenFile(fileId);
                 ASSERT(openfile != NULL);
 
-                // 读取具体数据
+                // 读取具体写入的数据
                 char buffer[128];
                 for(int i = 0; i < size; i++){
-                    machine->ReadMem(addr+i, 1, (int *)&buffer[i]);
+                    machine->ReadMem(addr+i,1,(int *)&buffer[i]);
                     if(buffer[i] == '\0') break;
                 }
                 buffer[size] = '\0';
 
+
+                // 打开文件
+                openfile = currentThread->space->getFileId(fileId);
+                if(openfile == NULL) {
+                    printf("Failed to Open file \"%d\".\n",fileId);
+                    AdvancePC();
+                    break;
+                }
+                if(fileId == 1 || fileId == 2){
+                    openfile->WriteStdout(buffer,size);
+                    delete []buffer;
+                    AdvancePC();
+                    break;
+                }
+
                 // 写入数据
-                int writePos;
-                if(fileId == 1)
-                    writePos = 0;
-                else 
-                    writePos = openfile->Length();
+                int writePos = openfile->Length();
+                openfile->Seek(writePos);
+
                 // 在 writePos 后面进行数据添加
-                int writtenBytes = openfile->WriteAt(buffer, size, writePos);
-                if(writtenBytes == 0)
-                    printf("write file failed!\n");
-                else
-                    printf("\"%s\" has wrote in file %d succeed!\n", buffer, fileId);
+                int writtenBytes = openfile->Write(buffer,size);
+                if(writtenBytes == 0) printf("Write file failed!\n");
+                else if(fileId != 1 & fileId != 2)
+                    printf("\"%s\" has wrote in file %d succeed!\n",buffer,fileId);
                 AdvancePC();
                 break;
             }
+
             case SC_Close:{
-                printf("Syscall exception type: SC_Close, CurrentThreadId: %d\n",currentThread->GetSpaceId());
                 int fileId = machine->ReadRegister(4);
-                Close(fileId);
-                printf("File %d closed succeed!\n", fileId);
+                OpenFile *openfile = currentThread->space->getFileId(fileId);
+                if(openfile != NULL) {
+                    openfile->WriteBack(); // 将文件写入DISK
+                    delete openfile;
+                    currentThread->space->releaseFileDescriptor(fileId);
+                    printf("File %d closed succeed!\n",fileId);
+                }
+                else printf("Failed to Close File %d.\n",fileId);
                 AdvancePC();
                 break;
             }
+
             case SC_Fork:{
                 printf("Syscall exception type: SC_Fork, CurrentThreadId: %d\n",currentThread->GetSpaceId());
                 
