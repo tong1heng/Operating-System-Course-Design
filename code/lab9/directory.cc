@@ -292,7 +292,11 @@ void Directory::List()
             printf("%s ", setStrLength(fileName, 9));
             printf("%s ", setStrLength(numFormat(fileSize), 7));
             printf("%s", setStrLength(numFormat(fileSectors), 6));
-            printf("%s\n", hdr->getDataSectors());
+            int *dataSectors = hdr->getDataSectors();
+            for(int j = 0; j < fileSectors; j++) {
+                printf("%d,", dataSectors[j]);
+            }
+            printf("\n");
         }
     printf("-------------------------------------------------------------\n");
 

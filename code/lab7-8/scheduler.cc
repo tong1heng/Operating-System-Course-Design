@@ -159,10 +159,11 @@ void
 Scheduler::DeleteTerminatedThread(int deleteSpaceId)
 {
     ListElement *first = terminatedList->listFirst();
-    while(first != NULL){
+    while(first != NULL) {
         Thread *thread = (Thread *)first->item;
-        if(deleteSpaceId == thread->GetSpaceId()){
+        if(deleteSpaceId == thread->GetSpaceId()) {
             terminatedList->RemoveItem(first);
+            // delete first;
             break;
         }
         first = first->next;

@@ -91,7 +91,7 @@ ExceptionHandler(ExceptionType which)
             case SC_Exit:{
                 printf("Syscall exception type: SC_Exit, CurrentThreadId: %d\n", currentThread->GetSpaceId());
 	            int exitCode = machine->ReadRegister(4);
-	            machine->WriteRegister(2, exitCode);
+	            // machine->WriteRegister(2, exitCode);
 	            currentThread->SetExitCode(exitCode);
 	            // 父进程的退出码特殊标记，由 Join 的实现方式决定
 	            // if(exitCode == 99)
@@ -99,7 +99,6 @@ ExceptionHandler(ExceptionType which)
 
 	            //delete currentThread->space;
 	            currentThread->Finish();
-                printf("**************************\n");
                 AdvancePC();
 	            break;
             }
@@ -128,7 +127,7 @@ ExceptionHandler(ExceptionType which)
                 }
                 // new address space
                 AddrSpace *space = new AddrSpace(executable);
-                space->Print();
+                // space->Print();
                 delete executable;
 
                 Thread *thread = new Thread(filename);
@@ -140,6 +139,7 @@ ExceptionHandler(ExceptionType which)
                     if(currentThread->childProcessSpaceId[j] == 0) {
                         currentThread->childProcessSpaceId[j] = space->GetSpaceId();
                         currentThread->childProcessNumber++;
+                        break;
                     }
                 }
                 thread->fatherProcessSpaceId = currentThread->GetSpaceId();
@@ -152,9 +152,7 @@ ExceptionHandler(ExceptionType which)
             case SC_Join: {
                 printf("Syscall exception type: SC_Join, CurrentThreadId: %d\n", currentThread->GetSpaceId());
                 int spaceId = machine->ReadRegister(4);     // i.e. ThreadId or SpaceId
-                // printf("before join******************************\n");
                 currentThread->Join(spaceId);
-                // printf("after join*******************************\n");
                 //返回 Joinee 的退出码 waitProcessExitCode
                 machine->WriteRegister(2, currentThread->GetWaitProcessExitCode());
                 AdvancePC();
@@ -269,30 +267,17 @@ ExceptionHandler(ExceptionType which)
             }
             case SC_Fork:{
                 printf("Syscall exception type: SC_Fork, CurrentThreadId: %d\n",currentThread->GetSpaceId());
-                
                 int functionPC = machine->ReadRegister(4);
 
-                // OpenFile *executable = fileSystem->Open("../test/fork.noff");
-                // if(executable == NULL) {
-                //     printf("Unable to open file\n");
-                //     return ;
-                // }
-                // // new address space
-                // AddrSpace *space = new AddrSpace(executable);
-                // // space->Print();
-                // delete executable;
-
                 AddrSpace *space = currentThread->space;
-                // space->pageMap->Print();
-                space->Print();
+                // space->Print();
 
                 Thread *thread = new Thread("forked thread");
                 thread->space = space;
-                thread->space->Print();
-                // thread->space->pageMap->Print();
+                // thread->space->Print();
                 printf("thread->spaceId = %d\n\n", thread->GetSpaceId());
 
-                printf("functionPC = %d***********************\n", functionPC);
+                // printf("functionPC = %d***********************\n", functionPC);
                 thread->Fork(StartThread, functionPC);
                 // currentThread->Yield();
 
@@ -312,8 +297,8 @@ ExceptionHandler(ExceptionType which)
         }
     } else {
 	    printf("Unexpected user mode exception %d %d\n", which, type);
-        currentThread->space->Print();
-        printf("current thread->spaceId = %d\n\n", currentThread->GetSpaceId());
+        // currentThread->space->Print();
+        // printf("current thread->spaceId = %d\n\n", currentThread->GetSpaceId());
 	    ASSERT(FALSE);
     }
 }

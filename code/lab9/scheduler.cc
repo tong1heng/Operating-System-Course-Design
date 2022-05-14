@@ -172,11 +172,16 @@ Scheduler::DeleteTerminatedThread(int deleteSpaceId)
 void
 Scheduler::PrintThreads()
 {
+    printf("================================\n");
     printf("Ready list contents:\n");
     readyList->Mapcar((VoidFunctionPtr) ThreadPrint);
+    printf("\n");
     printf("Ready waiting contents:\n");
     waitingList->Mapcar((VoidFunctionPtr) ThreadPrint);
+    printf("\n");
     printf("Ready terminated contents:\n");
     terminatedList->Mapcar((VoidFunctionPtr) ThreadPrint);
+    printf("\n");
+    printf("================================\n");
 }
 #endif

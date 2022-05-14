@@ -50,7 +50,7 @@ LD = $(GCCDIR)ld
 #        corresponding .o with start.o.  If you want to have more than
 #        one .c file per target, you will have to change stuff below.
 
-targets = myshell fr ff fork filetest join exit exec bar halt shell matmult sort
+targets =  ps myshell fr ff fork filetest yield join exit exec bar halt shell matmult sort
 
 # Targest are put in the architecture specific 'bin' dir.
 

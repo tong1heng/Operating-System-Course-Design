@@ -1,7 +1,8 @@
 #include "syscall.h"
 
 int main() {
-    SpaceId newProc = Exec("../test/exit.noff");
-    Join(newProc);
+    // SpaceId pid = Exec("../test/exit.noff");
+    SpaceId pid = Exec("../test/yield.noff");
+    Join(pid);
     Exit(0);
 }

@@ -149,7 +149,7 @@ Thread::CheckOverflow()
 //	between setting threadToBeDestroyed, and going to sleep.
 //----------------------------------------------------------------------
 
-//
+
 void
 Thread::Finish ()
 {
@@ -160,7 +160,6 @@ Thread::Finish ()
     // joinee finised, wakeup the join user program
     List *waitingList = scheduler->GetWaitingList();
     
-    //
     ListElement *first = waitingList->listFirst();
     while(first != NULL) {
         Thread *thread = (Thread *)first->item;
@@ -172,23 +171,6 @@ Thread::Finish ()
         }
         first = first->next;
     }
-
-    /*
-    //
-    Thread *waitingThread;
-    // if joiner is sleeping and in waitinglist, joinee wait up joiner when joinee finish 
-    int listLength = waitingList->ListLength(); 
-    for (int i = 1; i <= listLength; i++) { 
-        waitingThread = (Thread *)waitingList->getItem(i);
-        if(GetSpaceId() == waitingThread->GetWaitProcessSpaceId()) {
-            waitingThread->SetWaitProcessExitCode(exitCode);
-            scheduler->ReadyToRun((Thread *)waitingThread); 
-            waitingList->RemoveItem(i);
-            break;
-        } 
-    }
-    */
-
     Terminated();
 
 #else    
@@ -446,12 +428,8 @@ Thread::Join(int SpaceId)
     List *terminatedList = scheduler->GetTerminatedList();
     List *waitingList = scheduler->GetWaitingList();
 
-    // printf("-------------------------------before judge\n");
     // Judge whether joinee is still in or not in terminated list
-
     bool inTerminatedList = FALSE;              // assuming joinee is still in ready queue, not finished
-
-    // 
     ListElement *first = terminatedList->listFirst();
     while(first != NULL) {
         Thread *thread = (Thread *)first->item;
@@ -462,19 +440,6 @@ Thread::Join(int SpaceId)
         }
         first = first->next;
     }
-
-    // 
-    // int listLength = terminatedList->ListLength();
-    // for (int i = 1; i <= listLength; i++) {
-    //     thread = (Thread *)terminatedList->getItem(i);
-    //     if(thread->GetSpaceId() == SpaceId) {   // joinee alreday finished
-    //         inTerminatedList = TRUE; 
-    //         waitProcessExitCode = thread->GetExitCode();     // set waitProcessExitCode
-    //         break;
-    //     }
-    // }
-
-    // printf("-----------------------------after judge\n");
 
     // joinee is not finished, maybe at READY or BLOCKED
     if (!inTerminatedList) {
@@ -496,8 +461,6 @@ Thread::Terminated()
     status = TERMINATED; 
     terminatedList->Append((void *)this);
 
-
-
     // When father process exits, all child processes should be removed from terminated list
     ListElement *first = terminatedList->listFirst();
     while(first != NULL) {
@@ -510,8 +473,6 @@ Thread::Terminated()
         }
         first = first->next;
     }
-
-
 
     Thread *nextThread = scheduler->FindNextToRun(); 
     while(nextThread == NULL) {

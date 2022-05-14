@@ -266,7 +266,7 @@ List::RemoveItem(ListElement *element)
                 pre->next = now->next;
             }
         }
-        delete now;
+        // delete now;
     }
 }
 

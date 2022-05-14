@@ -42,7 +42,7 @@ class AddrSpace {
 					// address space
     unsigned int spaceId;
     static BitMap *pageMap;   // Bitmap of physical page, static for global view for all objects
-    static BitMap *pidMap;
+    static BitMap *pidMap;    // Bitmap of space id, static for global view for all objects
 };
 
 #endif // ADDRSPACE_H

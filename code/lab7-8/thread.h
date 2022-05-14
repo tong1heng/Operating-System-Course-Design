@@ -119,9 +119,9 @@ class Thread {
 
 #ifdef USER_PROGRAM
     
-    int waitProcessSpaceId;   // join 等待的线程id
-    int waitProcessExitCode;  // join 系统调用的返回值
-    int exitCode;             // 当前线程的退出码
+    int waitProcessSpaceId;   // waiting process id of syscall join
+    int waitProcessExitCode;  // return value of syscall join 
+    int exitCode;             // exit code of current thread
 
 // A thread running a user program actually has *two* sets of CPU registers -- 
 // one for its state while executing user code, one for its state 

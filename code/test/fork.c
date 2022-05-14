@@ -1,14 +1,13 @@
 #include "syscall.h"
 
 void func() {
-    // Create("a.txt");
     int a = 123;
     int b = 456;
-    Exit(0);
+    Exec("../test/halt.noff");
+    Exit(100);
 }
 
 int main() {
     Fork(func);
-    Exit(100);
-    //func();
+    Exit(0);
 }

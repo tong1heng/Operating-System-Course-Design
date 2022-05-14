@@ -66,7 +66,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 {
     ASSERT(pidMap->NumClear() >= 1);    // remain empty pid for use
     spaceId = pidMap->Find() + 100;     // 0-99 for kernel thread
-    printf("spaceId = %d\n", spaceId);
+    printf("Create new address space, space id = %d\n", spaceId);
 
     NoffHeader noffH;
     unsigned int i, size;
