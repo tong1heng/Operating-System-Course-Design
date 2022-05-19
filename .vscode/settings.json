@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "cstdlib": "cpp",
-        "algorithm": "cpp",
-        "exception": "cpp",
-        "new": "cpp",
-        "type_traits": "cpp"
-    }
-}
